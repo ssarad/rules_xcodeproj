@@ -29,6 +29,10 @@ extension Generator.Environment {
                     Generator.CreateCreateLinkDependenciesBuildPhaseObject(),
                 createEmbedAppExtensionsBuildPhaseObject:
                     Generator.CreateEmbedAppExtensionsBuildPhaseObject(),
+                createLinkArtifactObjects:
+                    Generator.CreateLinkArtifactObjects(),
+                createLinkBinaryWithLibrariesBuildPhaseObject:
+                    Generator.CreateLinkBinaryWithLibrariesBuildPhaseObject(),
                 createProductBuildFileObject:
                     Generator.CreateProductBuildFileObject(),
                 createSourcesBuildPhaseObject:

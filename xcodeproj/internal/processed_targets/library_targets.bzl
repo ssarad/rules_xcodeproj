@@ -210,6 +210,9 @@ def _process_library_target(
             ],
         )
 
+        preview_link_search_paths = linker_input_files.get_preview_link_search_paths(
+            linker_inputs,
+        )
         xcode_target = xcode_targets.make(
             build_settings_file = target_build_settings,
             configuration = configuration,
@@ -225,6 +228,11 @@ def _process_library_target(
             outputs = target_outputs,
             package_bin_dir = package_bin_dir,
             platform = platform,
+            preview_framework_search_paths = preview_link_search_paths.framework,
+            preview_library_search_paths = preview_link_search_paths.library,
+            preview_link_artifacts = linker_input_files.get_preview_link_artifacts(
+                linker_inputs,
+            ),
             product = product.xcode_product,
             transitive_dependencies = transitive_dependencies,
         )

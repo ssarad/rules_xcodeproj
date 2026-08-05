@@ -347,6 +347,10 @@ extension Generator.ProcessSwiftArgs {
 }
 
 private let skipSwiftArgs: [Substring: Int] = [
+    // Bazel's static-linking marker makes Xcode classify framework targets as
+    // static-* targets, which prevents SwiftUI preview source discovery.
+    "-static": 1,
+
     // Xcode sets output paths
     "-emit-module-path": 2,
     "-emit-object": 1,

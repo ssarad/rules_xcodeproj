@@ -42,7 +42,10 @@ extension Generator.CreateBuildFileObject {
             settings = #"settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; "#
         case .compileStub, .source:
             settings = ""
-        case .product, .watchKitExtension:
+        case .product,
+             .watchKitExtension,
+             .linkArtifact,
+             .linkArtifactReference:
             // Handled in `CreateProductBuildFileObject` and
             // `CreateProductObject`
             preconditionFailure()

@@ -11,6 +11,9 @@ extension Generator {
             CreateCreateLinkDependenciesBuildPhaseObject
         private let createEmbedAppExtensionsBuildPhaseObject:
             CreateEmbedAppExtensionsBuildPhaseObject
+        private let createLinkArtifactObjects: CreateLinkArtifactObjects
+        private let createLinkBinaryWithLibrariesBuildPhaseObject:
+            CreateLinkBinaryWithLibrariesBuildPhaseObject
         private let createProductBuildFileObject: CreateProductBuildFileObject
         private let createSourcesBuildPhaseObject: CreateSourcesBuildPhaseObject
 
@@ -29,6 +32,9 @@ extension Generator {
                 CreateCreateLinkDependenciesBuildPhaseObject,
             createEmbedAppExtensionsBuildPhaseObject:
                 CreateEmbedAppExtensionsBuildPhaseObject,
+            createLinkArtifactObjects: CreateLinkArtifactObjects,
+            createLinkBinaryWithLibrariesBuildPhaseObject:
+                CreateLinkBinaryWithLibrariesBuildPhaseObject,
             createProductBuildFileObject: CreateProductBuildFileObject,
             createSourcesBuildPhaseObject: CreateSourcesBuildPhaseObject,
             callable: @escaping Callable = Self.defaultCallable
@@ -42,6 +48,9 @@ extension Generator {
                 createCreateLinkDependenciesBuildPhaseObject
             self.createEmbedAppExtensionsBuildPhaseObject =
                 createEmbedAppExtensionsBuildPhaseObject
+            self.createLinkArtifactObjects = createLinkArtifactObjects
+            self.createLinkBinaryWithLibrariesBuildPhaseObject =
+                createLinkBinaryWithLibrariesBuildPhaseObject
             self.createProductBuildFileObject = createProductBuildFileObject
             self.createSourcesBuildPhaseObject = createSourcesBuildPhaseObject
 
@@ -85,6 +94,9 @@ extension Generator {
                     createCreateLinkDependenciesBuildPhaseObject,
                 /*createEmbedAppExtensionsBuildPhaseObject:*/
                     createEmbedAppExtensionsBuildPhaseObject,
+                /*createLinkArtifactObjects:*/ createLinkArtifactObjects,
+                /*createLinkBinaryWithLibrariesBuildPhaseObject:*/
+                    createLinkBinaryWithLibrariesBuildPhaseObject,
                 /*createProductBuildFileObject:*/ createProductBuildFileObject,
                 /*createSourcesBuildPhaseObject:*/ createSourcesBuildPhaseObject
             )
@@ -115,6 +127,9 @@ extension Generator.CreateBuildPhases {
             Generator.CreateCreateLinkDependenciesBuildPhaseObject,
         _ createEmbedAppExtensionsBuildPhaseObject:
             Generator.CreateEmbedAppExtensionsBuildPhaseObject,
+        _ createLinkArtifactObjects: Generator.CreateLinkArtifactObjects,
+        _ createLinkBinaryWithLibrariesBuildPhaseObject:
+            Generator.CreateLinkBinaryWithLibrariesBuildPhaseObject,
         _ createProductBuildFileObject: Generator.CreateProductBuildFileObject,
         _ createSourcesBuildPhaseObject: Generator.CreateSourcesBuildPhaseObject
     ) -> (
@@ -143,6 +158,9 @@ extension Generator.CreateBuildPhases {
             Generator.CreateCreateLinkDependenciesBuildPhaseObject,
         createEmbedAppExtensionsBuildPhaseObject:
             Generator.CreateEmbedAppExtensionsBuildPhaseObject,
+        createLinkArtifactObjects: Generator.CreateLinkArtifactObjects,
+        createLinkBinaryWithLibrariesBuildPhaseObject:
+            Generator.CreateLinkBinaryWithLibrariesBuildPhaseObject,
         createProductBuildFileObject: Generator.CreateProductBuildFileObject,
         createSourcesBuildPhaseObject: Generator.CreateSourcesBuildPhaseObject
     ) -> (
@@ -255,6 +273,26 @@ extension Generator.CreateBuildPhases {
                 createSourcesBuildPhaseObject(
                     subIdentifier: identifier.subIdentifier,
                     buildFileIdentifiers: sourcesIdentifiers
+                )
+            )
+        }
+
+        if !consolidatedInputs.previewLinkArtifacts.isEmpty {
+            var linkBuildFileIdentifiers: [String] = []
+            for path in consolidatedInputs.previewLinkArtifacts {
+                let result = createLinkArtifactObjects(
+                    createBuildFileSubIdentifier:
+                        createBuildFileSubIdentifier,
+                    path: path,
+                    shard: shard
+                )
+                linkBuildFileIdentifiers.append(result.buildFileIdentifier)
+                buildFileObjects.append(contentsOf: result.objects)
+            }
+            buildPhases.append(
+                createLinkBinaryWithLibrariesBuildPhaseObject(
+                    subIdentifier: identifier.subIdentifier,
+                    buildFileIdentifiers: linkBuildFileIdentifiers
                 )
             )
         }

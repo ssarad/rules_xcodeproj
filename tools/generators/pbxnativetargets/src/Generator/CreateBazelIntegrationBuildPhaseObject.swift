@@ -44,6 +44,32 @@ extension Generator.CreateBazelIntegrationBuildPhaseObject {
             return nil
         }
 
+        let normalizeFrameworkForPreviews: String
+        if productType == .framework {
+            normalizeFrameworkForPreviews = #"""
+
+target_build_dir="${TARGET_BUILD_DIR:-${BUILT_PRODUCTS_DIR:-}}"
+wrapper_name="${WRAPPER_NAME:-${PRODUCT_NAME:-}.framework}"
+executable_name="${EXECUTABLE_NAME:-${PRODUCT_NAME:-}}"
+framework_dir="$target_build_dir/$wrapper_name"
+if [[ -d "$framework_dir" && -n "$executable_name" ]]; then
+  framework_version="${FRAMEWORK_VERSION:-A}"
+  version_dir="$framework_dir/Versions/$framework_version"
+  mkdir -p "$version_dir/Resources"
+
+  if [[ -f "$framework_dir/Info.plist" ]]; then
+    cp -f "$framework_dir/Info.plist" "$version_dir/Resources/Info.plist"
+  fi
+
+  if [[ -f "$framework_dir/$executable_name" ]]; then
+    cp -f "$framework_dir/$executable_name" "$version_dir/$executable_name"
+  fi
+fi
+"""#
+        } else {
+            normalizeFrameworkForPreviews = ""
+        }
+
         let shellScript = #"""
 set -euo pipefail
 
@@ -55,6 +81,7 @@ else
   "$BAZEL_INTEGRATION_DIR/copy_outputs.sh" \
     "_BazelForcedCompile_.swift" \
     "\#(productType.rsyncExcludeFile)"
+\#(normalizeFrameworkForPreviews)
 fi
 
 """#

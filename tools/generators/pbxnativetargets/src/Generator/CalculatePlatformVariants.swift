@@ -59,6 +59,7 @@ extension Generator.CalculatePlatformVariants {
     ) {
         var srcs: [[BazelPath]] = []
         var nonArcSrcs: [[BazelPath]] = []
+        var previewLinkArtifacts: [[BazelPath]] = []
         var excludableFilesKeysWithValues: [(TargetID, Set<BazelPath>)] = []
         for id in ids {
             let targetArguments = try targetArguments.value(
@@ -68,6 +69,7 @@ extension Generator.CalculatePlatformVariants {
 
             srcs.append(targetArguments.srcs)
             nonArcSrcs.append(targetArguments.nonArcSrcs)
+            previewLinkArtifacts.append(targetArguments.previewLinkArtifacts)
 
             excludableFilesKeysWithValues.append(
                 (
@@ -134,14 +136,19 @@ extension Generator.CalculatePlatformVariants {
                         .flatMap { unitTestHosts[$0] },
                     dSYMPathsBuildSetting:
                         targetArguments.dSYMPathsBuildSetting.isEmpty ?
-                    nil : targetArguments.dSYMPathsBuildSetting
+                    nil : targetArguments.dSYMPathsBuildSetting,
+                    previewFrameworkSearchPaths:
+                        targetArguments.previewFrameworkSearchPaths,
+                    previewLibrarySearchPaths:
+                        targetArguments.previewLibrarySearchPaths
                 )
             )
         }
 
         let consolidatedInputs = Target.ConsolidatedInputs(
             srcs: consolidatePaths(srcs),
-            nonArcSrcs: consolidatePaths(nonArcSrcs)
+            nonArcSrcs: consolidatePaths(nonArcSrcs),
+            previewLinkArtifacts: consolidatePaths(previewLinkArtifacts)
         )
 
         return (platformVariants, allConditionalFiles, consolidatedInputs)

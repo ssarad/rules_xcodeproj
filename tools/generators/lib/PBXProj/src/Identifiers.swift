@@ -102,6 +102,12 @@ FF01000000000000000001\#(byteHexStrings[index]!) \#
             /// A watchKit extension referenced in a
             /// `BuildPhase.embedAppExtensions` build phase.
             case watchKitExtension = "3"
+
+            /// A link artifact referenced by a Frameworks build phase.
+            case linkArtifact = "4"
+
+            /// The file reference for a link artifact.
+            case linkArtifactReference = "5"
         }
 
         public struct SubIdentifier: Equatable {
@@ -539,6 +545,8 @@ private extension Identifiers.BuildFiles.FileType {
         case .nonArcSource: return .sources
         case .compileStub: return .sources
         case .watchKitExtension: return .embedAppExtensions
+        case .linkArtifact, .linkArtifactReference:
+            return .linkBinaryWithLibraries
         }
     }
 }
@@ -566,6 +574,7 @@ extension BuildPhase {
         case .sources: return "06"
         case .copySwiftGeneratedHeader: return "07"
         case .embedAppExtensions: return "08"
+        case .linkBinaryWithLibraries: return "09"
         }
     }
 }

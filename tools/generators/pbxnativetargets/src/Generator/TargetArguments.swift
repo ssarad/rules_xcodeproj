@@ -27,6 +27,9 @@ struct TargetArguments: Equatable {
     // FIXME: Extract to `Inputs` type
     let srcs: [BazelPath]
     let nonArcSrcs: [BazelPath]
+    let previewLinkArtifacts: [BazelPath]
+    let previewFrameworkSearchPaths: [BazelPath]
+    let previewLibrarySearchPaths: [BazelPath]
 
     let dSYMPathsBuildSetting: String
 }
@@ -88,6 +91,21 @@ extension Dictionary<TargetID, TargetArguments> {
                 as: BazelPath.self,
                 in: url
             )
+            let previewLinkArtifacts = try rawArgs.consumeArgs(
+                "preview-link-artifacts",
+                as: BazelPath.self,
+                in: url
+            )
+            let previewFrameworkSearchPaths = try rawArgs.consumeArgs(
+                "preview-framework-search-paths",
+                as: BazelPath.self,
+                in: url
+            )
+            let previewLibrarySearchPaths = try rawArgs.consumeArgs(
+                "preview-library-search-paths",
+                as: BazelPath.self,
+                in: url
+            )
             let xcodeConfigurations = try rawArgs.consumeArgs(
                 "xcode-configurations",
                 in: url
@@ -130,6 +148,10 @@ extension Dictionary<TargetID, TargetArguments> {
                         hasCxxParams: hasCxxParams,
                         srcs: srcs,
                         nonArcSrcs: nonArcSrcs,
+                        previewLinkArtifacts: previewLinkArtifacts,
+                        previewFrameworkSearchPaths:
+                            previewFrameworkSearchPaths,
+                        previewLibrarySearchPaths: previewLibrarySearchPaths,
                         dSYMPathsBuildSetting: dSYMPathsBuildSetting
                     )
                 )

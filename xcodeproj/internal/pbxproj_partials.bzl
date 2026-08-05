@@ -309,6 +309,21 @@ def _write_consolidation_map_targets(
                 omit_if_empty = False,
                 terminate_with = "",
             )
+            targets_args.add_all(
+                xcode_target.preview_link_artifacts,
+                omit_if_empty = False,
+                terminate_with = "",
+            )
+            targets_args.add_all(
+                xcode_target.preview_framework_search_paths,
+                omit_if_empty = False,
+                terminate_with = "",
+            )
+            targets_args.add_all(
+                xcode_target.preview_library_search_paths,
+                omit_if_empty = False,
+                terminate_with = "",
+            )
 
             targets_args.add_all(
                 xcode_target_configurations[xcode_target.id],
@@ -674,6 +689,7 @@ def _write_pbxproj_prefix(
         separate_index_build_output_base,
         suppress_coverage_build,
         target_ids_list,
+        toolchain_identifier,
         tool,
         workspace_directory,
         xcode_configurations):
@@ -709,6 +725,7 @@ def _write_pbxproj_prefix(
         suppress_coverage_build: Whether or not to disable coverage builds even
             when `CLANG_COVERAGE_MAPPING` is set.
         target_ids_list: A `File` containing a list of target IDs.
+        toolchain_identifier: The identifier for the rules_xcodeproj toolchain.
         tool: The executable that will generate the `PBXProj` partial.
         workspace_directory: The absolute path to the Bazel workspace
             directory.
@@ -757,6 +774,9 @@ def _write_pbxproj_prefix(
 
     # resolvedRepositoriesFile
     args.add(resolved_repositories_file)
+
+    # toolchainIdentifier
+    args.add(toolchain_identifier)
 
     # minimumXcodeVersion
     args.add(minimum_xcode_version)

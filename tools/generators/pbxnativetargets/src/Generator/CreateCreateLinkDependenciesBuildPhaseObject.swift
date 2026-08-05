@@ -41,6 +41,10 @@ extension Generator.CreateCreateLinkDependenciesBuildPhaseObject {
         let action = #"""
 perl -pe 's/\$(\()?([a-zA-Z_]\w*)(?(1)\))/$ENV{$2}/g' \
   "$SCRIPT_INPUT_FILE_0" > "$SCRIPT_OUTPUT_FILE_0"
+if [[ "${PRODUCT_TYPE:-}" == *framework ]]; then
+  perl -i -pe 's/(^|\s)-l\Q$ENV{PRODUCT_MODULE_NAME}\E(?=\s|$)/$1/g' \
+    "$SCRIPT_OUTPUT_FILE_0"
+fi
 """#
         var shellScriptComponents: [String] = [
             #"""

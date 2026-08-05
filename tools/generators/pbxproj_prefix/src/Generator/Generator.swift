@@ -65,6 +65,7 @@ struct Generator {
                     ),
                 /*separateIndexBuildOutputBase:*/ arguments.separateIndexBuildOutputBase,
                 /*suppressCoverageBuild:*/ arguments.suppressCoverageBuild,
+                /*toolchainIdentifier:*/ arguments.toolchainIdentifier,
                 /*workspace:*/ arguments.workspace
             ),
             /*compatibilityVersion:*/ environment.compatibilityVersion(

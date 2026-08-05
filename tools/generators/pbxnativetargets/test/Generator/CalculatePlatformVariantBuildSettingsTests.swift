@@ -247,6 +247,32 @@ class CalculatePlatformVariantBuildSettingsTests: XCTestCase {
         )
     }
 
+    func test_previewSearchPaths() async throws {
+        let platformVariant = Target.PlatformVariant.mock(
+            previewFrameworkSearchPaths: [
+                "bazel-out/ios/bin/Frameworks",
+            ],
+            previewLibrarySearchPaths: [
+                "bazel-out/ios/bin/Lib",
+            ]
+        )
+
+        let buildSettings =
+            try await calculatePlatformVariantBuildSettingsWithDefaults(
+                platformVariant: platformVariant
+            )
+
+        XCTAssertNoDifference(
+            buildSettings.asDictionary,
+            baseBuildSettings.updating([
+                "FRAMEWORK_SEARCH_PATHS":
+                    #""\"$(BAZEL_OUT)/ios/bin/Frameworks\"""#,
+                "LIBRARY_SEARCH_PATHS":
+                    #""\"$(BAZEL_OUT)/ios/bin/Lib\"""#,
+            ])
+        )
+    }
+
     func test_linkParams() async throws {
         // Arrange
 
@@ -476,7 +502,9 @@ private extension Target.PlatformVariant {
         buildSettingsFromFile: [PlatformVariantBuildSetting] = [],
         linkParams: String? = nil,
         unitTestHost: Target.UnitTestHost? = nil,
-        dSYMPathsBuildSetting: String? = nil
+        dSYMPathsBuildSetting: String? = nil,
+        previewFrameworkSearchPaths: [BazelPath] = [],
+        previewLibrarySearchPaths: [BazelPath] = []
     ) -> Self {
         return Self(
             xcodeConfigurations: xcodeConfigurations,
@@ -496,7 +524,9 @@ private extension Target.PlatformVariant {
             buildSettingsFromFile: buildSettingsFromFile,
             linkParams: linkParams,
             unitTestHost: unitTestHost,
-            dSYMPathsBuildSetting: dSYMPathsBuildSetting
+            dSYMPathsBuildSetting: dSYMPathsBuildSetting,
+            previewFrameworkSearchPaths: previewFrameworkSearchPaths,
+            previewLibrarySearchPaths: previewLibrarySearchPaths
         )
     }
 }

@@ -2,29 +2,116 @@
 
 set -euo pipefail
 
-passthrough_args=("${@:1}")
+args=("$@")
+developer_dir=""
+dependency_info_files=()
+should_link=0
+version_query=0
 
-while test $# -gt 0
-do
-  case $1 in
-  *_dependency_info.dat)
-    ld_version=$(ld -v 2>&1 | grep ^@)
-    printf "\0%s\0" "$ld_version" > "$1"
-    break
-    ;;
+for ((i = 0; i < ${#args[@]}; i++)); do
+  case "${args[$i]}" in
+    *_dependency_info.dat)
+      dependency_info_files+=("${args[$i]}")
+      ;;
 
-  -isysroot)
-    shift
-    # PATH/DEVELOPER_DIR isn't set when this is called, so we need to calculate
-    # the developer dir from the sysroot to invoke clang (used below)
-    developer_dir="${1/\/Platforms\/*/}"
-    ;;
+    -isysroot)
+      i=$((i + 1))
+      # PATH/DEVELOPER_DIR isn't set when this is called, so calculate the
+      # developer dir from the sysroot to invoke the default clang below.
+      developer_dir="${args[$i]/\/Platforms\/*/}"
+      ;;
 
-  *.preview-thunk.dylib)
-    # Pass through for SwiftUI Preview thunk compilation
-    # TODO: Make this work with custom toolchains
-    exec "$developer_dir/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" "${passthrough_args[@]}"
-    ;;
+    *.debug.dylib|*.preview-thunk.dylib)
+      should_link=1
+      ;;
+
+    -version_details)
+      version_query=1
+      ;;
   esac
-  shift
 done
+
+readonly toolchain_bin="$(cd "$(dirname "$0")" && pwd)"
+readonly installed_default_ld="$toolchain_bin/rules_xcodeproj_default_ld"
+readonly installed_default_clang="$toolchain_bin/rules_xcodeproj_default_clang"
+
+if [[ -x "$installed_default_ld" ]]; then
+  default_ld="$installed_default_ld"
+else
+  if [[ -z "$developer_dir" ]]; then
+    developer_dir="${DEVELOPER_DIR:-$(/usr/bin/xcode-select -p)}"
+  fi
+  default_ld="$developer_dir/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld"
+fi
+readonly default_ld
+
+if [[ $version_query -eq 1 ]]; then
+  exec "$default_ld" "${args[@]}"
+fi
+
+if [[ ${#dependency_info_files[@]} -gt 0 ]]; then
+  ld_version=$("$default_ld" -v 2>&1 | grep ^@)
+  for dependency_info in "${dependency_info_files[@]}"; do
+    printf "\0%s\0" "$ld_version" > "$dependency_info"
+  done
+fi
+
+if [[ $should_link -eq 1 ]]; then
+  # rules_xcodeproj delegates compilation to Bazel, so Xcode's link file lists
+  # contain placeholder object paths that don't exist. Keep real objects (such
+  # as preview thunks) and let the Bazel artifacts in the Frameworks phase
+  # provide the target's compiled code.
+  readonly temp_dir="$(mktemp -d "${TMPDIR:-/tmp}/rules_xcodeproj_ld.XXXXXX")"
+  trap 'rm -rf "$temp_dir"' EXIT
+
+  passthrough_args=()
+  for ((i = 0; i < ${#args[@]}; i++)); do
+    if [[
+      "${args[$i]}" == "-Xlinker" &&
+      $((i + 3)) -lt ${#args[@]} &&
+      "${args[$((i + 1))]}" == "-filelist" &&
+      "${args[$((i + 2))]}" == "-Xlinker"
+    ]]; then
+      original_filelist="${args[$((i + 3))]}"
+      filtered_filelist="$temp_dir/filelist_${i}"
+
+      while IFS= read -r path; do
+        [[ -e "$path" ]] && printf '%s\n' "$path"
+      done < "$original_filelist" > "$filtered_filelist"
+
+      passthrough_args+=(
+        "-Xlinker"
+        "-filelist"
+        "-Xlinker"
+        "$filtered_filelist"
+      )
+      i=$((i + 3))
+    elif [[
+      "${args[$i]}" == "-filelist" &&
+      $((i + 1)) -lt ${#args[@]}
+    ]]; then
+      original_filelist="${args[$((i + 1))]}"
+      filtered_filelist="$temp_dir/filelist_${i}"
+
+      while IFS= read -r path; do
+        [[ -e "$path" ]] && printf '%s\n' "$path"
+      done < "$original_filelist" > "$filtered_filelist"
+
+      passthrough_args+=("-filelist" "$filtered_filelist")
+      i=$((i + 1))
+    else
+      passthrough_args+=("${args[$i]}")
+    fi
+  done
+
+  if [[ -x "$installed_default_clang" ]]; then
+    default_clang="$installed_default_clang"
+  else
+    if [[ -z "$developer_dir" ]]; then
+      developer_dir="${DEVELOPER_DIR:-$(/usr/bin/xcode-select -p)}"
+    fi
+    default_clang="$developer_dir/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang"
+  fi
+
+  "$default_clang" "${passthrough_args[@]}"
+fi

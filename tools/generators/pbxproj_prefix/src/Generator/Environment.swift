@@ -40,7 +40,8 @@ extension Generator {
             _ resolvedRepositories: String,
             _ separateIndexBuildOutputBase: Bool,
             _ suppressCoverageBuild: Bool,
-            _ workspace: String,
+            _ toolchainIdentifier: String,
+            _ workspace: String
         ) -> String
 
         let pbxProjectPrefixPartial: (

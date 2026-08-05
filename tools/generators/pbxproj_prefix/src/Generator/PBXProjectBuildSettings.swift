@@ -30,6 +30,7 @@ extension Generator {
         resolvedRepositories: String,
         separateIndexBuildOutputBase: Bool,
         suppressCoverageBuild: Bool,
+        toolchainIdentifier: String,
         workspace: String
     ) -> String {
         var buildSettings: [BuildSetting] = [
@@ -88,15 +89,15 @@ extension Generator {
             .init(key: "CXX", value: #""$(BAZEL_INTEGRATION_DIR)/clang.sh""#),
             .init(key: "DEBUG_INFORMATION_FORMAT", value: "dwarf"),
             .init(key: "DSTROOT", value: #""$(PROJECT_TEMP_DIR)""#),
-            .init(key: "ENABLE_DEBUG_DYLIB", value: "NO"),
+            .init(key: "ENABLE_DEBUG_DYLIB", value: "YES"),
             .init(key: "ENABLE_DEFAULT_SEARCH_PATHS", value: "NO"),
             .init(key: "ENABLE_STRICT_OBJC_MSGSEND", value: "YES"),
             .init(key: "ENABLE_USER_SCRIPT_SANDBOXING", value: "NO"),
             .init(key: "GCC_OPTIMIZATION_LEVEL", value: "0"),
-            .init(key: "LD", value: #""$(BAZEL_INTEGRATION_DIR)/ld""#),
+            .init(key: "LD", value: #""$(BAZEL_INTEGRATION_DIR)/clang""#),
             .init(
                 key: "LDPLUSPLUS",
-                value: #""$(BAZEL_INTEGRATION_DIR)/ld""#
+                value: #""$(BAZEL_INTEGRATION_DIR)/clang""#
             ),
             .init(
                 key: "LIBTOOL",
@@ -160,9 +161,10 @@ extension Generator {
             ),
             .init(key: "SWIFT_OBJC_INTERFACE_HEADER_NAME", value: #""""#),
             .init(key: "SWIFT_OPTIMIZATION_LEVEL", value: #""-Onone""#),
-            .init(key: "SWIFT_USE_INTEGRATED_DRIVER", value: "NO"),
+            .init(key: "SWIFT_USE_INTEGRATED_DRIVER", value: "YES"),
             .init(key: "SWIFT_VERSION", value: "5.0"),
             .init(key: "TAPI_EXEC", value: "/usr/bin/true"),
+            .init(key: "TOOLCHAINS", value: toolchainIdentifier.pbxProjEscaped),
             .init(
                 key: "TARGET_TEMP_DIR",
                 value: #"""

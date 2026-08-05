@@ -149,7 +149,8 @@ if [[ -n "${TOOLCHAINS-}" ]]; then
 
   if [[ ${#filtered_toolchains[@]} -gt 0 ]]; then
     toolchain="${filtered_toolchains[0]}"
-    if [[ "$toolchain" == "com.apple.dt.toolchain.XcodeDefault" ]]; then
+    if [[ "$toolchain" == "com.apple.dt.toolchain.XcodeDefault" ||
+          "$toolchain" == com.rules-xcodeproj.BazelRulesXcodeProj* ]]; then
       unset toolchain
     fi
   fi

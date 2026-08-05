@@ -583,6 +583,9 @@ def _process_focused_top_level_target(
     module_name_attribute = (
         props.product_name if bundle_info != None else module_name_attribute
     )
+    preview_link_search_paths = linker_input_files.get_preview_link_search_paths(
+        linker_inputs,
+    )
 
     return processed_targets.make(
         compilation_providers = provider_compilation_providers,
@@ -621,6 +624,11 @@ def _process_focused_top_level_target(
             outputs = target_outputs,
             package_bin_dir = package_bin_dir,
             platform = platform,
+            preview_framework_search_paths = preview_link_search_paths.framework,
+            preview_library_search_paths = preview_link_search_paths.library,
+            preview_link_artifacts = linker_input_files.get_preview_link_artifacts(
+                linker_inputs,
+            ),
             product = xcode_product,
             test_host = test_host,
             transitive_dependencies = transitive_dependencies,

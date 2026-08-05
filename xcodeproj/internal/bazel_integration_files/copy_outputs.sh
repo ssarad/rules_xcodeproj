@@ -24,6 +24,19 @@ readonly test_frameworks=(
 readonly rsync="$BAZEL_INTEGRATION_DIR/rsync"
 
 if [[ "$ACTION" != indexbuild ]]; then
+  preview_excludes=()
+  if [[
+    "${ENABLE_DEBUG_DYLIB:-}" == "YES" &&
+    -n "${EXECUTABLE_PATH:-}"
+  ]]; then
+    readonly executable_dir="${EXECUTABLE_PATH%/*}"
+    preview_excludes=(
+      "--exclude=/$EXECUTABLE_PATH"
+      "--exclude=/$executable_dir/$PRODUCT_NAME.debug.dylib"
+      "--exclude=/$executable_dir/__preview.dylib"
+    )
+  fi
+
   # Copy product
   if [[ -n ${BAZEL_OUTPUTS_PRODUCT:-} ]]; then
     cd "${BAZEL_OUTPUTS_PRODUCT%/*}"
@@ -40,6 +53,7 @@ if [[ "$ACTION" != indexbuild ]]; then
         --times \
         --delete \
         ${exclude_list:+--exclude-from="$exclude_list"} \
+        "${preview_excludes[@]}" \
         --perms \
         --chmod=u+w \
         --out-format="%n%L" \

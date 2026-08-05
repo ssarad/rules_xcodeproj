@@ -79,6 +79,9 @@ def _make_xcode_target(
         outputs,
         package_bin_dir,
         platform,
+        preview_framework_search_paths = EMPTY_DEPSET,
+        preview_library_search_paths = EMPTY_DEPSET,
+        preview_link_artifacts = EMPTY_DEPSET,
         product,
         test_host = None,
         transitive_dependencies,
@@ -111,6 +114,9 @@ def _make_xcode_target(
         package_bin_dir: The package directory for the `Target` within
             `ctx.bin_dir`.
         platform: A value from `platforms.collect`.
+        preview_framework_search_paths: Framework search paths used by XOJIT.
+        preview_library_search_paths: Library search paths used by XOJIT.
+        preview_link_artifacts: Link artifacts exposed to XOJIT.
         product: A value from `process_product`.
         test_host: The target ID of this target's test host, or `None`.
         transitive_dependencies: A `depset` of `id`s of all transitive targets
@@ -138,7 +144,15 @@ def _make_xcode_target(
         )
 
     if mergeable_info:
-        compile_target_ids = mergeable_info.compile_target_ids
+        if is_top_level and product.type == "f":
+            # SwiftUI previews analyze the built target description for the
+            # Xcode framework target. Pointing this at the merged static Swift
+            # library makes Xcode match preview translation units against
+            # Bazel-relative source paths instead of the PBX target's absolute
+            # source paths.
+            compile_target_ids = id
+        else:
+            compile_target_ids = mergeable_info.compile_target_ids
         module_name = mergeable_info.module_name or module_name
     else:
         compile_target_ids = EMPTY_STRING
@@ -162,6 +176,9 @@ def _make_xcode_target(
         outputs = _to_xcode_target_outputs(outputs),
         package_bin_dir = package_bin_dir,
         platform = platform,
+        preview_framework_search_paths = preview_framework_search_paths,
+        preview_library_search_paths = preview_library_search_paths,
+        preview_link_artifacts = preview_link_artifacts,
         product = product,
         unfocus_if_not_test_host = unfocus_if_not_test_host,
         test_host = test_host,

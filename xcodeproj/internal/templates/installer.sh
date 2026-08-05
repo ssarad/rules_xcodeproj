@@ -74,6 +74,7 @@ readonly src_rsync="$PWD/%rsync%"
 readonly src_xcschememanagement="$PWD/%xcschememanagement%"
 readonly src_xcschemes="$PWD/%xcschemes%/"
 readonly src_xcworkspacedata="$PWD/%contents_xcworkspacedata%"
+readonly toolchain_name="%toolchain_name%"
 
 # Resolve the destination
 [[ -z "${dest:-}" ]] \
@@ -126,35 +127,110 @@ chmod +w "$dest_project_pbxproj"
 
 # Copy over bazel integration files
 readonly bazel_integration_files=%bazel_integration_files%
+readonly bazel_integration_dir="$dest/rules_xcodeproj/bazel"
+readonly staged_bazel_integration_dir="$dest/rules_xcodeproj/.bazel.$$.tmp"
 
-mkdir -p "$dest/rules_xcodeproj/bazel"
-rm -rf "$dest/rules_xcodeproj/bazel"/*
-$cp_cmd "${bazel_integration_files[@]}" "$dest/rules_xcodeproj/bazel"
-$cp_cmd "$bazel_env" "$dest/rules_xcodeproj/bazel/bazel_env.sh"
-$cp_cmd "$xcodeproj_bazelrc" "$dest/rules_xcodeproj/bazel/xcodeproj.bazelrc"
-chmod u+rx "$dest/rules_xcodeproj/bazel/rsync"
+rm -rf "$staged_bazel_integration_dir"
+mkdir -p "$bazel_integration_dir" "$staged_bazel_integration_dir"
+$cp_cmd "${bazel_integration_files[@]}" "$staged_bazel_integration_dir"
+$cp_cmd "$bazel_env" "$staged_bazel_integration_dir/bazel_env.sh"
+$cp_cmd "$xcodeproj_bazelrc" \
+  "$staged_bazel_integration_dir/xcodeproj.bazelrc"
+$cp_cmd "$staged_bazel_integration_dir/ld" \
+  "$staged_bazel_integration_dir/clang"
+chmod u+rx "$staged_bazel_integration_dir/rsync"
 
 if [[ -s "${extra_flags_bazelrc:-}" ]]; then
-  $cp_cmd "$extra_flags_bazelrc" "$dest/rules_xcodeproj/bazel/xcodeproj_extra_flags.bazelrc"
+  $cp_cmd "$extra_flags_bazelrc" \
+    "$staged_bazel_integration_dir/xcodeproj_extra_flags.bazelrc"
 else
-  rm -f "$dest/rules_xcodeproj/bazel/xcodeproj_extra_flags.bazelrc"
+  rm -f "$bazel_integration_dir/xcodeproj_extra_flags.bazelrc"
 fi
 
-chmod u+w "$dest/rules_xcodeproj/bazel/"*
+chmod u+w "$staged_bazel_integration_dir/"*
+
+# Keep only scripts as runnable before exposing them through the toolchain.
+find "$staged_bazel_integration_dir" \
+  -type f \( -name "*.sh" -o -name "*.py" -o -name "clang" -o -name "ld" -o -name "libtool" -o -name "rsync" \) \
+  -print0 | xargs -0 chmod u+x
+find "$staged_bazel_integration_dir" \
+  -type f ! \( -name "swiftc" -o -name "clang" -o -name "ld" -o -name "libtool" -o -name "import_indexstores" -o -name "rsync" -o -name "*.sh" -o -name "*.py" \) \
+  -print0 | xargs -0 chmod -x
+
+for path in "$staged_bazel_integration_dir/"*; do
+  mv -f "$path" "$bazel_integration_dir/${path##*/}"
+done
+rmdir "$staged_bazel_integration_dir"
+
+if [[ $is_macos -eq 1 ]]; then
+  readonly default_toolchain="$(
+    xcrun --toolchain XcodeDefault --find swiftc |
+      sed 's|/usr/bin/swiftc$||'
+  )"
+  readonly toolchain="$dest/rules_xcodeproj/$toolchain_name.xctoolchain"
+  readonly toolchain_bin="$toolchain/usr/bin"
+
+  mkdir -p "$toolchain_bin"
+
+  for path in "$default_toolchain/usr/"*; do
+    [[ "${path##*/}" == "bin" ]] && continue
+    ln -sfn "$path" "$toolchain/usr/${path##*/}"
+  done
+
+  for path in "$default_toolchain/usr/bin/"*; do
+    case "${path##*/}" in
+      c++|cc|clang|clang++|ld|libtool|swiftc|swift-frontend)
+        ;;
+      *)
+        ln -sfn "$path" "$toolchain_bin/${path##*/}"
+        ;;
+    esac
+  done
+
+  ln -sfn "$dest/rules_xcodeproj/bazel/clang.sh" "$toolchain_bin/clang"
+  ln -sfn clang "$toolchain_bin/clang++"
+  ln -sfn clang "$toolchain_bin/cc"
+  ln -sfn clang "$toolchain_bin/c++"
+  ln -sfn "$default_toolchain/usr/bin/clang" \
+    "$toolchain_bin/rules_xcodeproj_default_clang"
+  ln -sfn "$default_toolchain/usr/bin/ld" \
+    "$toolchain_bin/rules_xcodeproj_default_ld"
+  ln -sfn "$dest/rules_xcodeproj/bazel/ld" "$toolchain_bin/ld"
+  ln -sfn "$dest/rules_xcodeproj/bazel/libtool" "$toolchain_bin/libtool"
+  ln -sfn "$dest/rules_xcodeproj/bazel/swiftc" "$toolchain_bin/swiftc"
+  ln -sfn swiftc "$toolchain_bin/swift-frontend"
+
+  cp "$default_toolchain/ToolchainInfo.plist" "$toolchain/ToolchainInfo.plist"
+  plutil -replace CFBundleIdentifier \
+    -string "com.rules-xcodeproj.$toolchain_name" \
+    "$toolchain/ToolchainInfo.plist"
+  plutil -replace Identifier \
+    -string "com.rules-xcodeproj.$toolchain_name" \
+    "$toolchain/ToolchainInfo.plist"
+  plutil -replace DisplayName -string "$toolchain_name" \
+    "$toolchain/ToolchainInfo.plist"
+  plutil -replace ShortDisplayName -string "$toolchain_name" \
+    "$toolchain/ToolchainInfo.plist"
+  plutil -remove CompatibilityVersion \
+    "$toolchain/ToolchainInfo.plist" > /dev/null 2>&1 || true
+  plutil -insert CompatibilityVersion -integer 2 \
+    "$toolchain/ToolchainInfo.plist"
+  plutil -remove Version \
+    "$toolchain/ToolchainInfo.plist" > /dev/null 2>&1 || true
+  plutil -insert Version -string "1.0" \
+    "$toolchain/ToolchainInfo.plist"
+  cp "$toolchain/ToolchainInfo.plist" "$toolchain/Info.plist"
+
+  readonly user_toolchains="$HOME/Library/Developer/Toolchains"
+  mkdir -p "$user_toolchains"
+  ln -sfn "$toolchain" "$user_toolchains/$toolchain_name.xctoolchain"
+fi
 
 # Copy over `generated.xcfilelist`
 readonly dest_generated_xcfilelist="$dest/rules_xcodeproj/generated.xcfilelist"
 
 $cp_cmd "$src_generated_xcfilelist" "$dest_generated_xcfilelist"
 chmod u+w "$dest_generated_xcfilelist"
-
-# - Keep only scripts as runnable
-find "$dest/rules_xcodeproj/bazel" \
-  -type f \( -name "*.sh" -o -name "*.py" -o -name "ld" -o -name "libtool" -o -name "rsync" \) \
-  -print0 | xargs -0 chmod u+x
-find "$dest/rules_xcodeproj/bazel" \
-  -type f ! \( -name "swiftc" -o -name "ld" -o -name "libtool" -o -name "import_indexstores" -o -name "rsync" -o -name "*.sh" -o -name "*.py" \) \
-  -print0 | xargs -0 chmod -x
 
 # Copy over `project.xcworkspace/contents.xcworkspacedata` if needed
 readonly dest_xcworkspacedata="$dest/project.xcworkspace/contents.xcworkspacedata"

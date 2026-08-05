@@ -57,6 +57,9 @@ setting.
         )
         var resolvedRepositoriesFile: URL
 
+        @Argument(help: "Identifier of the rules_xcodeproj Xcode toolchain.")
+        var toolchainIdentifier: String
+
         @Argument(help: """
 Minimum Xcode version that the generated project supports.
 """)

@@ -90,6 +90,12 @@ extension Generator.CalculatePlatformVariantBuildSettings {
             )
         }
 
+        if productType == .framework || productType == .staticFramework {
+            buildSettings.append(
+                .init(key: "DEFINES_MODULE", value: "YES")
+            )
+        }
+
         if let outputsProductPath = platformVariant.outputsProductPath {
             buildSettings.append(
                 .init(
@@ -183,6 +189,29 @@ extension Generator.CalculatePlatformVariantBuildSettings {
             )
         }
 
+        if !platformVariant.previewFrameworkSearchPaths.isEmpty {
+            buildSettings.append(
+                .init(
+                    key: "FRAMEWORK_SEARCH_PATHS",
+                    value: platformVariant.previewFrameworkSearchPaths
+                        .map { "\"\($0.path.previewSearchPath)\"" }
+                        .joined(separator: " ")
+                        .pbxProjEscaped
+                )
+            )
+        }
+        if !platformVariant.previewLibrarySearchPaths.isEmpty {
+            buildSettings.append(
+                .init(
+                    key: "LIBRARY_SEARCH_PATHS",
+                    value: platformVariant.previewLibrarySearchPaths
+                        .map { "\"\($0.path.previewSearchPath)\"" }
+                        .joined(separator: " ")
+                        .pbxProjEscaped
+                )
+            )
+        }
+
         buildSettings.append(contentsOf: platformVariant.buildSettingsFromFile)
 
         return buildSettings
@@ -192,6 +221,16 @@ extension Generator.CalculatePlatformVariantBuildSettings {
 struct PlatformVariantBuildSetting: Equatable {
     let key: String
     let value: String
+}
+
+private extension String {
+    var previewSearchPath: String {
+        guard hasPrefix("bazel-out/") else {
+            return self
+        }
+
+        return "$(BAZEL_OUT)\(dropFirst(9))"
+    }
 }
 
 private extension Platform.OS {

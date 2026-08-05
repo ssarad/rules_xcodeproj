@@ -180,6 +180,41 @@ def _get_minimum_xcode_version(*, xcode_config):
 """)
     return ".".join(version.split(".")[0:3])
 
+def _sanitize_toolchain_component(value):
+    return value.replace("/", "-").replace("_", "-").replace(
+        " ",
+        "-",
+    ).replace(".", "-").replace("@", "-").replace("+", "-").replace(
+        ":",
+        "-",
+    ).strip("-")
+
+def _get_custom_toolchain(
+        *,
+        project_name,
+        workspace_directory,
+        xcode_config):
+    version = str(xcode_config.xcode_version())
+    if not version:
+        fail("""\
+`xcode_config.xcode_version` was not set. This is a bazel bug. Try again.
+""")
+
+    build_version = version.split(".")[-1]
+    workspace_components = workspace_directory.split("/")
+    workspace_key = "-".join(workspace_components[-2:])
+    project_key = _sanitize_toolchain_component(
+        "{}-{}".format(workspace_key, project_name),
+    )
+    name = "BazelRulesXcodeProj-{}-{}".format(
+        project_key[-120:],
+        build_version,
+    )
+    return struct(
+        identifier = "com.rules-xcodeproj.{}".format(name),
+        name = name,
+    )
+
 def _process_dep(dep):
     info = dep[XcodeProjInfo]
 
@@ -259,6 +294,7 @@ def _write_installer(
         project_pbxproj,
         rsync,
         template,
+        toolchain_name,
         xcschememanagement,
         xcschemes):
     installer = actions.declare_file(
@@ -282,6 +318,7 @@ def _write_installer(
             "%output_path%": install_path,
             "%project_pbxproj%": project_pbxproj.short_path,
             "%rsync%": rsync.short_path,
+            "%toolchain_name%": toolchain_name,
             "%xcschememanagement%": xcschememanagement.short_path,
             "%xcschemes%": xcschemes.short_path,
         },
@@ -326,6 +363,7 @@ def _write_project_contents(
         separate_index_build_output_base,
         suppress_coverage_build,
         target_name_mode,
+        toolchain_identifier,
         unique_directories,
         unowned_extra_files,
         unsupported_extra_files,
@@ -446,6 +484,7 @@ def _write_project_contents(
         separate_index_build_output_base = separate_index_build_output_base,
         suppress_coverage_build = suppress_coverage_build,
         target_ids_list = target_ids_list,
+        toolchain_identifier = toolchain_identifier,
         tool = pbxproj_prefix_generator,
         xcode_configurations = xcode_configurations,
         workspace_directory = workspace_directory,
@@ -614,6 +653,11 @@ Are you using an `alias`? `xcodeproj.focused_targets` and \
     suppress_coverage_build = ctx.attr.suppress_coverage_build
     name = ctx.attr.name
     workspace_directory = ctx.attr.workspace_directory
+    custom_toolchain = _get_custom_toolchain(
+        project_name = "{}-{}".format(ctx.label.package, name),
+        workspace_directory = workspace_directory,
+        xcode_config = ctx.attr._xcode_config[apple_common.XcodeVersionConfig],
+    )
 
     inputs = input_files.merge(transitive_infos = infos)
 
@@ -682,6 +726,7 @@ Are you using an `alias`? `xcodeproj.focused_targets` and \
         separate_index_build_output_base = separate_index_build_output_base,
         suppress_coverage_build = suppress_coverage_build,
         target_name_mode = ctx.attr.target_name_mode,
+        toolchain_identifier = custom_toolchain.identifier,
         unique_directories = ctx.executable._unique_directories,
         unowned_extra_files = ctx.files.unowned_extra_files,
         unsupported_extra_files = inputs.unsupported_extra_files,
@@ -750,6 +795,7 @@ Are you using an `alias`? `xcodeproj.focused_targets` and \
         project_pbxproj = project_pbxproj,
         rsync = ctx.file._rsync,
         template = ctx.file._installer_template,
+        toolchain_name = custom_toolchain.name,
         xcschememanagement = xcschememanagement,
         xcschemes = xcschemes,
     )

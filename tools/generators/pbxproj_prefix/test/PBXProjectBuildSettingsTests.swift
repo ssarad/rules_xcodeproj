@@ -43,7 +43,7 @@ class PBXProjectBuildSettingsTests: XCTestCase {
 				CXX = "$(BAZEL_INTEGRATION_DIR)/clang.sh";
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DSTROOT = "$(PROJECT_TEMP_DIR)";
-				ENABLE_DEBUG_DYLIB = NO;
+				ENABLE_DEBUG_DYLIB = YES;
 				ENABLE_DEFAULT_SEARCH_PATHS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
@@ -57,8 +57,8 @@ class PBXProjectBuildSettingsTests: XCTestCase {
 				INDEX_IMPORT = "$(BAZEL_EXTERNAL)/index-import";
 				INSTALL_PATH = "$(BAZEL_PACKAGE_BIN_DIR)/$(TARGET_NAME)/bin";
 				INTERNAL_DIR = "$(PROJECT_FILE_PATH)/rules_xcodeproj";
-				LD = "$(BAZEL_INTEGRATION_DIR)/ld";
-				LDPLUSPLUS = "$(BAZEL_INTEGRATION_DIR)/ld";
+				LD = "$(BAZEL_INTEGRATION_DIR)/clang";
+				LDPLUSPLUS = "$(BAZEL_INTEGRATION_DIR)/clang";
 				LD_DYLIB_INSTALL_NAME = "";
 				LD_OBJC_ABI_VERSION = "";
 				LD_RUNPATH_SEARCH_PATHS = "";
@@ -73,10 +73,11 @@ class PBXProjectBuildSettingsTests: XCTestCase {
 				SWIFT_EXEC = "$(BAZEL_INTEGRATION_DIR)/swiftc";
 				SWIFT_OBJC_INTERFACE_HEADER_NAME = "";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_USE_INTEGRATED_DRIVER = NO;
+				SWIFT_USE_INTEGRATED_DRIVER = YES;
 				SWIFT_VERSION = 5.0;
 				TAPI_EXEC = /usr/bin/true;
 				TARGET_TEMP_DIR = "$(PROJECT_TEMP_DIR)/$(BAZEL_PACKAGE_BIN_DIR)/$(COMPILE_TARGET_NAME)";
+				TOOLCHAINS = "com.rules-xcodeproj.BazelRulesXcodeProj16F6";
 				USE_HEADERMAP = NO;
 				VALIDATE_WORKSPACE = NO;
 				_BAZEL_OUTPUT_BASE = "$(PROJECT_DIR)/../..";
@@ -96,6 +97,8 @@ class PBXProjectBuildSettingsTests: XCTestCase {
             resolvedRepositories: resolvedRepositories,
             separateIndexBuildOutputBase: false,
             suppressCoverageBuild: false,
+            toolchainIdentifier:
+                "com.rules-xcodeproj.BazelRulesXcodeProj16F6",
             workspace: workspace
         )
 
@@ -139,7 +142,7 @@ class PBXProjectBuildSettingsTests: XCTestCase {
 				CXX = "$(BAZEL_INTEGRATION_DIR)/clang.sh";
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DSTROOT = "$(PROJECT_TEMP_DIR)";
-				ENABLE_DEBUG_DYLIB = NO;
+				ENABLE_DEBUG_DYLIB = YES;
 				ENABLE_DEFAULT_SEARCH_PATHS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
@@ -153,8 +156,8 @@ class PBXProjectBuildSettingsTests: XCTestCase {
 				INDEX_IMPORT = "$(BAZEL_EXTERNAL)/index-import";
 				INSTALL_PATH = "$(BAZEL_PACKAGE_BIN_DIR)/$(TARGET_NAME)/bin";
 				INTERNAL_DIR = "$(PROJECT_FILE_PATH)/rules_xcodeproj";
-				LD = "$(BAZEL_INTEGRATION_DIR)/ld";
-				LDPLUSPLUS = "$(BAZEL_INTEGRATION_DIR)/ld";
+				LD = "$(BAZEL_INTEGRATION_DIR)/clang";
+				LDPLUSPLUS = "$(BAZEL_INTEGRATION_DIR)/clang";
 				LD_DYLIB_INSTALL_NAME = "";
 				LD_OBJC_ABI_VERSION = "";
 				LD_RUNPATH_SEARCH_PATHS = "";
@@ -169,10 +172,11 @@ class PBXProjectBuildSettingsTests: XCTestCase {
 				SWIFT_EXEC = "$(BAZEL_INTEGRATION_DIR)/swiftc";
 				SWIFT_OBJC_INTERFACE_HEADER_NAME = "";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_USE_INTEGRATED_DRIVER = NO;
+				SWIFT_USE_INTEGRATED_DRIVER = YES;
 				SWIFT_VERSION = 5.0;
 				TAPI_EXEC = /usr/bin/true;
 				TARGET_TEMP_DIR = "$(PROJECT_TEMP_DIR)/$(BAZEL_PACKAGE_BIN_DIR)/$(COMPILE_TARGET_NAME)";
+				TOOLCHAINS = "com.rules-xcodeproj.BazelRulesXcodeProj16F6";
 				USE_HEADERMAP = NO;
 				VALIDATE_WORKSPACE = NO;
 				_BAZEL_OUTPUT_BASE = "$(PROJECT_DIR)/../..";
@@ -190,6 +194,8 @@ class PBXProjectBuildSettingsTests: XCTestCase {
             resolvedRepositories: resolvedRepositories,
             separateIndexBuildOutputBase: false,
             suppressCoverageBuild: true,
+            toolchainIdentifier:
+                "com.rules-xcodeproj.BazelRulesXcodeProj16F6",
             workspace: workspace
         )
         XCTAssertNoDifference(buildSettings, expectedBuildSettings)
@@ -233,7 +239,7 @@ class PBXProjectBuildSettingsTests: XCTestCase {
 				CXX = "$(BAZEL_INTEGRATION_DIR)/clang.sh";
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DSTROOT = "$(PROJECT_TEMP_DIR)";
-				ENABLE_DEBUG_DYLIB = NO;
+				ENABLE_DEBUG_DYLIB = YES;
 				ENABLE_DEFAULT_SEARCH_PATHS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
@@ -247,8 +253,8 @@ class PBXProjectBuildSettingsTests: XCTestCase {
 				INDEX_IMPORT = "$(BAZEL_EXTERNAL)/index-import";
 				INSTALL_PATH = "$(BAZEL_PACKAGE_BIN_DIR)/$(TARGET_NAME)/bin";
 				INTERNAL_DIR = "$(PROJECT_FILE_PATH)/rules_xcodeproj";
-				LD = "$(BAZEL_INTEGRATION_DIR)/ld";
-				LDPLUSPLUS = "$(BAZEL_INTEGRATION_DIR)/ld";
+				LD = "$(BAZEL_INTEGRATION_DIR)/clang";
+				LDPLUSPLUS = "$(BAZEL_INTEGRATION_DIR)/clang";
 				LD_DYLIB_INSTALL_NAME = "";
 				LD_OBJC_ABI_VERSION = "";
 				LD_RUNPATH_SEARCH_PATHS = "";
@@ -263,10 +269,11 @@ class PBXProjectBuildSettingsTests: XCTestCase {
 				SWIFT_EXEC = "$(BAZEL_INTEGRATION_DIR)/swiftc";
 				SWIFT_OBJC_INTERFACE_HEADER_NAME = "";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_USE_INTEGRATED_DRIVER = NO;
+				SWIFT_USE_INTEGRATED_DRIVER = YES;
 				SWIFT_VERSION = 5.0;
 				TAPI_EXEC = /usr/bin/true;
 				TARGET_TEMP_DIR = "$(PROJECT_TEMP_DIR)/$(BAZEL_PACKAGE_BIN_DIR)/$(COMPILE_TARGET_NAME)";
+				TOOLCHAINS = "com.rules-xcodeproj.BazelRulesXcodeProj16F6";
 				USE_HEADERMAP = NO;
 				VALIDATE_WORKSPACE = NO;
 				_BAZEL_OUTPUT_BASE = "$(PROJECT_DIR)/../..";
@@ -286,6 +293,8 @@ class PBXProjectBuildSettingsTests: XCTestCase {
             resolvedRepositories: resolvedRepositories,
             separateIndexBuildOutputBase: true,
             suppressCoverageBuild: false,
+            toolchainIdentifier:
+                "com.rules-xcodeproj.BazelRulesXcodeProj16F6",
             workspace: workspace
         )
 

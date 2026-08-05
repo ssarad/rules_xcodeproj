@@ -56,12 +56,97 @@ def _collect_linker_inputs(
         )
         top_level_values = None
 
+    preview_link_artifacts = _collect_preview_link_artifacts(
+        target = target,
+        cc_linker_inputs = cc_linker_inputs,
+        compilation_providers = compilation_providers,
+        objc_libraries = objc_libraries,
+        primary_static_library = primary_static_library,
+    )
+
     return struct(
         _cc_linker_inputs = tuple(cc_linker_inputs),
         _compilation_providers = compilation_providers,
         _objc_libraries = tuple(objc_libraries),
+        _preview_link_artifacts = depset(preview_link_artifacts),
         _primary_static_library = primary_static_library,
         _top_level_values = top_level_values,
+    )
+
+def _framework_path(file):
+    components = file.path.split("/")
+    for index, component in enumerate(components):
+        if component.endswith(".framework"):
+            return "/".join(components[:index + 1])
+    return None
+
+def _collect_preview_link_artifacts(
+        *,
+        target,
+        cc_linker_inputs,
+        compilation_providers,
+        objc_libraries,
+        primary_static_library):
+    artifacts = {}
+
+    target_name = target.label.name
+    if target_name.endswith(".framework"):
+        target_name = target_name[:-len(".framework")]
+    target_archive_name = "lib%s.a" % target_name
+
+    def add_file(file):
+        if not file or file == primary_static_library:
+            return
+        if file.basename == target_archive_name:
+            return
+
+        framework_path = _framework_path(file)
+        if framework_path:
+            artifacts[framework_path] = None
+        elif file.extension in ("a", "dylib"):
+            artifacts[file.path] = None
+
+    for library in objc_libraries:
+        add_file(library)
+
+    if compilation_providers.objc:
+        objc = compilation_providers.objc
+        for file in objc.static_framework_file.to_list():
+            add_file(file)
+        for file in objc.dynamic_framework_file.to_list():
+            add_file(file)
+
+    for linker_input in cc_linker_inputs:
+        for library in linker_input.libraries:
+            add_file(
+                library.static_library or
+                library.pic_static_library or
+                library.resolved_symlink_dynamic_library or
+                library.dynamic_library or
+                library.interface_library,
+            )
+
+    for file in compilation_providers.framework_files.to_list():
+        add_file(file)
+
+    return artifacts.keys()
+
+def _get_preview_link_artifacts(linker_inputs):
+    return linker_inputs._preview_link_artifacts
+
+def _get_preview_link_search_paths(linker_inputs):
+    library_search_paths = {}
+    framework_search_paths = {}
+
+    for artifact in linker_inputs._preview_link_artifacts.to_list():
+        if artifact.endswith(".framework"):
+            framework_search_paths[artifact.rsplit("/", 1)[0]] = None
+        else:
+            library_search_paths[artifact.rsplit("/", 1)[0]] = None
+
+    return struct(
+        framework = depset(framework_search_paths.keys()),
+        library = depset(library_search_paths.keys()),
     )
 
 def _merge_linker_inputs(*, compilation_providers):
@@ -318,6 +403,8 @@ linker_input_files = struct(
         _get_library_static_libraries_for_bwx
     ),
     get_primary_static_library = _get_primary_static_library,
+    get_preview_link_artifacts = _get_preview_link_artifacts,
+    get_preview_link_search_paths = _get_preview_link_search_paths,
     get_transitive_static_libraries_for_bwx = (
         _get_transitive_static_libraries_for_bwx
     ),
