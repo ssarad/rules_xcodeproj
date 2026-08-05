@@ -50,9 +50,9 @@ set -euo pipefail
 if [[ "$ACTION" == "indexbuild" ]]; then
   cd "$SRCROOT"
 
-  "$BAZEL_INTEGRATION_DIR/generate_index_build_bazel_dependencies.sh"
+  "$CENTRALIZED_TOOLS_DIR/generate_index_build_bazel_dependencies.sh"
 else
-  "$BAZEL_INTEGRATION_DIR/copy_outputs.sh" \
+  "$CENTRALIZED_TOOLS_DIR/copy_outputs.sh" \
     "_BazelForcedCompile_.swift" \
     "\#(productType.rsyncExcludeFile)"
 fi
@@ -107,21 +107,21 @@ private extension PBXProductType {
             .messagesApplication,
             .onDemandInstallCapableApplication,
             .watch2AppContainer:
-            return "$BAZEL_INTEGRATION_DIR/app.exclude.rsynclist"
+            return "$CENTRALIZED_TOOLS_DIR/app.exclude.rsynclist"
         case .framework:
-            return "$BAZEL_INTEGRATION_DIR/framework.exclude.rsynclist"
+            return "$CENTRALIZED_TOOLS_DIR/framework.exclude.rsynclist"
         case .unitTestBundle,
             .uiTestBundle:
-            return "$BAZEL_INTEGRATION_DIR/xctest.exclude.rsynclist"
+            return "$CENTRALIZED_TOOLS_DIR/xctest.exclude.rsynclist"
         case .appExtension,
             .extensionKitExtension,
             .intentsServiceExtension,
             .messagesExtension,
             .tvExtension,
             .watch2Extension:
-            return "$BAZEL_INTEGRATION_DIR/appex.exclude.rsynclist"
+            return "$CENTRALIZED_TOOLS_DIR/appex.exclude.rsynclist"
         case .watch2App:
-            return "$BAZEL_INTEGRATION_DIR/watchos2_app.exclude.rsynclist"
+            return "$CENTRALIZED_TOOLS_DIR/watchos2_app.exclude.rsynclist"
         case .stickerPack,
              .xcodeExtension,
              .resourceBundle,
